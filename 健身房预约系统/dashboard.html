@@ -1,0 +1,364 @@
+<!-- dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>预约系统 - 控制面板</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            position: relative; /* 确保 body 在背景容器之上 */
+            z-index: 1;
+        }
+        .form-box {
+            background-color: #e6f0ff; /* 浅蓝色背景 */
+            width: 300px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 15px; /* 圆角 */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 轻微阴影 */
+        }
+        .header {
+            width: 100%;
+            background-color: #f4f4f4;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            background-color: #78b3f3;
+        }
+
+        .sidebar{
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 10px;
+            height: 100vh;
+            margin-top: 40px;
+            background-color: #78b3f3;
+        }
+
+        .rightbar{
+            width: 150px;
+            background-color: #f4f4f4;
+            padding: 10px;
+            height: 100vh;
+            margin-top: 40px;
+            background-color: #78b3f3;
+        }
+        
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            margin-top: 40px;
+            text-align: center;
+        }
+        .content-title {
+            font-weight: bold; /* 标题加粗 */
+            margin-bottom: 15px;
+        }
+
+        .sidebar-box, .profile-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .location-info {
+            display: none;
+            font-size: smaller;
+            font-weight: normal;
+            padding: 5px;
+            border-top: 1px solid #ddd;
+        }
+        .sidebar-box:hover .location-info {
+            display: block;
+        }
+        .sidebar-box.active {
+            background-color: #a0a0a0; /* 深灰色 */
+        }
+
+        .profile-dropdown {
+            display: none;
+            background-color: #78b3f3;
+            padding: 10px;
+            border: 1px solid #ddd;
+            width: 100px;
+        }
+
+        .profile-container:hover .profile-dropdown {
+            display: block;
+        }
+
+        .date-boxes {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .date-box {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .date-box.active {
+            background-color: #a0a0a0; /* 深灰色 */
+        }
+        .time-table {
+            margin-top: 20px;
+            width: 100%;
+            text-align: left;
+        }
+        .time-table th, .time-table td {
+            padding: 5px;
+            border: 1px solid #ddd;
+        }
+        .bookable {
+            color: black;
+            cursor: pointer;
+        }
+        .not-bookable {
+            color: grey;
+            cursor: not-allowed;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: white;
+            color: black;
+            border: none;
+            border-radius: 5px; /* 按钮圆角 */
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #78b3f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">北京邮电大学体育馆预约系统</div>
+
+    <div class="sidebar">
+        <div class="sidebar-box active" onclick="updateContent(this, '预约须知')">
+            预约须知
+        </div>
+        <div class="sidebar-box" onclick="updateContent(this, '其他')">
+            健身房
+            <div class="location-info">西土城校区</div>
+        </div>
+        <div class="sidebar-box" onclick="updateContent(this, '其他')">
+            一层羽毛球场
+            <div class="location-info">西土城校区</div>
+        </div>
+        <div class="sidebar-box" onclick="updateContent(this, '其他')">
+            三层羽毛球场
+            <div class="location-info">西土城校区</div>
+        </div>
+        <div class="sidebar-box" onclick="updateContent(this, '其他')">
+            乒乓球场
+            <div class="location-info">西土城校区</div>
+        </div>
+        <div class="sidebar-box" onclick="updateContent(this, '其他')">
+            游泳馆
+            <div class="location-info">西土城校区</div>
+        </div>
+        <div class="sidebar-box" onclick="updateContent(this, '其他')">
+            沙河校区乒乓球场地
+            <div class="location-info">沙河校区</div>
+        </div>
+        <div class="sidebar-box" onclick="updateContent(this, '其他')">
+            沙河校区羽毛球场地-室内
+            <div class="location-info">沙河校区-学生活动中心</div>
+        </div>
+        <div class="sidebar-box" onclick="updateContent(this, '其他')">
+            健身房-沙河校区
+            <div class="location-info">沙河校区</div>
+        </div>
+    </div>
+
+    <div class="content" id="content-area">
+        
+    </div>
+    <div class="rightbar">
+        <div class="profile-container">
+            <img src=".jpg" alt="用户">
+            <div class="profile-dropdown">
+                <button onclick="window.location.href='account.html'">账户信息</button>
+                <button onclick="window.location.href='appointments.html'">已预约信息</button>
+                <button onclick="logout()">退出登录</button> 
+                <div id="user-points" title="完成运动后可获得一点积分，积分可用来购买套餐">积分: 0</div>
+            </div>
+        </div>
+    </div>
+
+
+    
+    <form id="bookingForm" action="payment.html" method="post" style="display: none;">
+        <input type="hidden" name="location" id="bookingLocation">
+        <input type="hidden" name="time" id="bookingTime">
+    </form>
+
+    <script>
+        var BACKEND_URL = 'http://127.0.0.1:5000/appointments';
+
+        function toggleDropdown() {
+            var dropdown = document.getElementById("profile-dropdown");
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        }
+
+        window.onclick = function(event) {
+            var dropdown = document.getElementById("profile-dropdown");
+            if (!event.target.matches('.profile, .profile *')) {
+                dropdown.style.display = "none";
+            }
+        };
+        function updateContent(element, type) {
+            var contentArea = document.getElementById('content-area');
+
+            // 移除所有激活状态
+            var boxes = document.querySelectorAll('.sidebar-box');
+            boxes.forEach(box => box.classList.remove('active'));
+
+            // 激活点击的盒子
+            element.classList.add('active');
+
+            if (type === '预约须知') {
+                contentArea.innerHTML = '<div class="content-title">预约须知</div><div>不要运动</div>';
+            } else {
+                contentArea.innerHTML = '<div class="content-title">' + element.textContent + '</div>';
+                showDateBoxes();
+            }
+        }
+
+        function showDateBoxes() {
+            var today = new Date();
+            var tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            var todayStr = (today.getMonth() + 1) + '月' + today.getDate() + '日';
+            var tomorrowStr = (tomorrow.getMonth() + 1) + '月' + tomorrow.getDate() + '日';
+
+            var contentArea = document.getElementById('content-area');
+            contentArea.innerHTML += '<div class="date-boxes">' +
+                                        '<div class="date-box active" onclick="selectDate(this)">' + todayStr + '</div>' +
+                                        '<div class="date-box" onclick="selectDate(this)">' + tomorrowStr + '</div>' +
+                                     '</div>';
+            generateTimeTable(); 
+        }
+
+        function selectDate(dateBox) {
+            var dateBoxes = document.querySelectorAll('.date-box');
+            dateBoxes.forEach(box => box.classList.remove('active'));
+            dateBox.classList.add('active');
+
+            var activeDateBox = document.querySelector('.date-box.active').textContent.trim();
+
+            // 获取今天和明天的日期字符串
+            var today = new Date();
+            var tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            var todayStr = (today.getMonth() + 1) + '月' + today.getDate() + '日';
+            var tomorrowStr = (tomorrow.getMonth() + 1) + '月' + tomorrow.getDate() + '日';
+
+            // 根据激活的日期盒子设置 dayIndex
+            var dayIndex = activeDateBox === todayStr ? 0 : 1;
+
+            // 清除之前的表格（如果存在）
+            var existingTable = document.querySelector('.time-table');
+            if (existingTable) {
+                existingTable.remove();
+            }
+
+            generateTimeTable(dayIndex); // 传递所选日期的索引
+            }
+
+        function generateTimeTable(dayIndex) {
+            var facilityElement = document.querySelector('.sidebar-box.active');
+            var facilityText = facilityElement.textContent.trim();
+            var facility = facilityText.split('\n')[0].trim();
+
+            fetch('http://127.0.0.1:5000/appointments/availability/' + facility, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ dateIndex: dayIndex })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    var tableHtml = '<table class="time-table"><tr><th>时间段</th><th>人数</th><th>状态</th></tr>';
+                    data.forEach(item => {
+                        var timeSlot = item.TimeSlot;
+                        var count = item.AvailableSpots;
+                        var statusHtml = count > 0
+                            ? '<td class="bookable" onclick="bookSlot(\'' + timeSlot + '\')">可预约</td>'
+                            : '<td class="not-bookable">&#10060; 不可预约</td>';
+
+                        tableHtml += '<tr><td>' + timeSlot + '</td><td>' + count + '/100</td>' + statusHtml + '</tr>';
+                    });
+                    tableHtml += '</table>';
+
+                    var contentArea = document.getElementById('content-area');
+                    contentArea.innerHTML += tableHtml;
+                })
+                .catch((error) => {
+                    console.error('获取预约信息错误:', error);
+                });
+        }
+
+        function logout() {
+            window.location.href = 'index.html'; // 跳转到登录页面
+        }
+
+        // 页面加载时，默认选中并显示预约须知的内容
+        window.onload = function() {
+            var defaultBox = document.querySelector('.sidebar-box');
+            updateContent(defaultBox, '预约须知');
+        };
+
+        function bookSlot(time) {
+            var location = document.querySelector('.sidebar-box.active').textContent;
+
+            // 使用 fetch API 发送预约信息到后端
+            fetch(BACKEND_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ location: location, time: time })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('预约成功:', data);
+                // 假设成功后跳转到 payment.html
+                window.location.href = 'payment.html';
+            })
+            .catch((error) => {
+                console.error('预约错误:', error);
+            });
+        }
+        function loadUserPoints() {
+            fetch('http://127.0.0.1:5000/get-points')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('user-points').textContent = '积分: ' + data.points;
+                })
+                .catch(error => {
+                    console.error('Error fetching points:', error);
+                });
+        }
+
+        window.onload = function() {
+            loadUserPoints();
+            // 其他 onload 逻辑...
+        };
+    </script>
+</body>
+</html>

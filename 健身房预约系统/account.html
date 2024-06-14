@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>账户信息</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column; /* 垂直布局 */
+        }
+        .header {
+            width: 100%;
+            height: 50px;
+            background-color: #e6f0ff; /* 浅蓝色背景 */
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            position: fixed;
+            top: 0;
+            z-index: 1;
+        }
+        .main {
+            display: flex;
+            margin-top: 50px; /* 留出顶部栏空间 */
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #e6f0ff; /* 浅蓝色背景 */
+            padding: 10px;
+            height: calc(100vh - 50px); /* 减去顶部栏的高度 */
+            box-sizing: border-box;
+            opacity: 0.8;
+        }
+        .sidebar-box {
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .package-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .background-image {
+            position: fixed; /* 固定位置 */
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-image: url('C:/Users/32068/Desktop/健身房预约系统/images/background.jpg');
+            background-size: cover; /* 覆盖整个页面 */
+            background-position: center; /* 居中对齐 */
+            z-index: -1; /* 确保背景在内容之后 */
+            opacity: 0.5; /* 调节透明度 */
+        }
+        button {
+            padding: 10px 15px;
+            background-color: white;
+            color: black;
+            border: none;
+            border-radius: 5px; /* 按钮圆角 */
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #78b3f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-image"></div>
+    <div class="header">Welcome <span id="username"></span>
+        <button onclick="window.location.href='dashboard.html'">返回</button>
+    </div>
+    <div class="main">
+        <div class="sidebar">
+            <div class="sidebar-box" onclick="updateContent('套餐')">购买套餐</div>
+            <div class="sidebar-box" onclick="updateContent('互动')">社区互动</div>
+            <div class="sidebar-box" onclick="updateContent('我的套餐')">我的套餐</div>
+        </div>
+        <div class="content" id="content-area">
+            <!-- 内容区域 -->
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // 获取用户名并更新界面
+            fetch('http://127.0.0.1:5000/get-username')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('username').textContent = data.username || '用户';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        };
+
+        function updateContent(contentType) {
+            var contentArea = document.getElementById('content-area');
+            if (contentType === '互动') {
+                var confirmInteraction = confirm("社区互动功能需要访问用户信息，是否同意？");
+                if (confirmInteraction) {
+                    // 跳转至 community.html
+                    window.location.href = 'community.html';
+                } else {
+                    contentArea.innerHTML = '<h2>社区互动</h2><p>访问被拒绝。</p>';
+                }
+            } else if(contentType === '套餐') {
+                contentArea.innerHTML = '<div style="width: 100%;">' +
+                                            '<div class="package-box" onclick="selectPackage(\'健身房月度套餐 120\')">健身房月度套餐 120￥</div>' +
+                                            '<div class="package-box" onclick="selectPackage(\'健身房季度套餐 270\')">健身房季度套餐 270￥</div>' +
+                                            '<div class="package-box" onclick="selectPackage(\'健身房年度套餐 688\')">健身房年度套餐 688￥</div>' +
+                                            '<div class="package-box" onclick="selectPackage(\'游泳年度套餐 1088\')">游泳年度套餐 1088￥</div>' +
+                                        '</div>';
+            }
+            else{
+                fetch('http://127.0.0.1:5000/get-my-package')
+                .then(response => response.json())
+                .then(data => {
+                    // 显示套餐信息
+                    contentArea.innerHTML = `<h2>我的套餐</h2><p>套餐名称: ${data.setmeal}</p>`;
+                })
+                .catch(error => {
+                    console.error('Error fetching package data:', error);
+                    contentArea.innerHTML = '<p>无法加载套餐信息。</p>';
+                });
+            };
+        }
+        function selectPackage(packageInfo) {
+            var parts = packageInfo.split(" ");
+            var packageName = parts.slice(0, -1).join(" ");
+            var price = parts[parts.length - 1].replace("￥", ""); // 移除价格中的货币符号
+
+            fetch('http://127.0.0.1:5000/set-package', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ package: packageName, price: price })
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = 'setpayment.html';
+                } else {
+                    alert("套餐信息设置失败，请重试");
+                }
+            })
+            .catch(error => {
+                console.error('Error setting package:', error);
+            });
+        };
+
+        function redirectToPayment(price, packageName) {
+            // 跳转前发送套餐信息到后端
+            fetch('http://127.0.0.1:5000/set-package', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ package: packageName, price: price })
+            })
+            .then(response => {
+                if (response.ok) {
+                    // 跳转到 setpayment.html
+                    window.location.href = 'setpayment.html';
+                } else {
+                    alert("套餐信息设置失败，请重试");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        };
+
+    </script>
+</body>
+</html>

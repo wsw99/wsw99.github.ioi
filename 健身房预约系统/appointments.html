@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>预约信息</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        
+        .navbar {
+            width: 100%;
+            background-color: #f4f4f4;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            background-color: #78b3f3
+        }
+
+        .navbar button {
+            margin-left: 10px;
+            border-radius: 5px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+
+        .user-info .avatar {
+            width: 50px;
+            height: 50px;
+            background-color: #ccc;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .user-info .username {
+            font-size: 16px;
+        }
+
+
+        .sidebar{
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 10px;
+            height: 100vh;
+            margin-top: 40px;
+            background-color: #78b3f3;
+            width: 150px;
+        }
+
+        .sidebar-box {
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .sidebar-box.active {
+            background-color: #a0a0a0;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            margin-top: 55px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .button {
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <button onclick="window.location.href='dashboard.html'">首页</button>
+        <div class="user-info">
+            <img src=".jpg" alt="Profile">
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-box" id="appointmentsBox" onclick="showSection('appointments')">预约</div>
+        <div class="sidebar-box" id="completedBox" onclick="showSection('completed')">已完成</div>
+        <div class="sidebar-box" id="cancelledBox" onclick="showSection('cancelled')">已取消</div>
+    </div>
+
+    <div class="content" id="content-area">
+        <!-- 表格内容将在这里显示 -->
+    </div>
+
+    <script>
+        var appointments = [];
+        var completedAppointments = [];
+        var cancelledAppointments = [];
+
+        function fetchAppointmentsData() {
+            fetch('http://127.0.0.1:5000/user_appointments')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络请求失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    appointments = data.filter(item => item.status === '预约');
+                    completedAppointments = data.filter(item => item.status === '已完成');
+                    cancelledAppointments = data.filter(item => item.status === '已取消');
+                    showSection('appointments'); // 默认显示“预约”部分
+                })
+                .catch(error => {
+                    console.error('获取预约信息失败:', error);
+                });
+        }
+
+
+
+        function showSection(section) {
+            setActiveBox(section + 'Box');
+            var contentArea = document.getElementById('content-area');
+            var tableHtml = '<table><tr><th>地点</th><th>时间</th><th>日期(0为今天，1为明天）</th><th>操作/状态</th></tr>';
+
+            var dataToDisplay = [];
+            switch (section) {
+                case 'appointments':
+                    dataToDisplay = appointments;
+                    break;
+                case 'completed':
+                    dataToDisplay = completedAppointments;
+                    break;
+                case 'cancelled':
+                    dataToDisplay = cancelledAppointments;
+                    break;
+            }
+
+            if (dataToDisplay.length > 0) {
+                dataToDisplay.forEach(function(appointment, index) {
+                    tableHtml += '<tr>' +
+                                '<td>' + appointment.location + '</td>' +
+                                '<td>' + appointment.time + '</td>' +
+                                '<td>' + appointment.dateindex + '</td>';
+
+                    if (section === 'appointments') {
+                        tableHtml += '<td>' +
+                                    '<button class="button" onclick="markCompleted(' + index + ')">确认完成</button>' +
+                                    '<button class="button" onclick="cancelAppointment(' + index + ')">取消预约</button>' +
+                                    '</td></tr>';
+                    } else {
+                        var statusText = section === 'completed' ? '已完成' : '已取消';
+                        tableHtml += '<td>' + statusText + '</td></tr>';
+                    }
+                });
+            } else {
+                tableHtml = '没有相关预约信息。';
+            }
+
+            contentArea.innerHTML = tableHtml;
+        }
+
+
+        function setActiveBox(boxId) {
+            document.querySelectorAll('.sidebar-box').forEach(box => {
+                box.classList.remove('active');
+            });
+            document.getElementById(boxId).classList.add('active');
+        }
+
+        function markCompleted(index) {
+            var appointment = appointments[index];
+            if (confirm('确认已经完成?')) {
+                fetch('http://127.0.0.1:5000/confirm_completion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ facility: appointment.location, time: appointment.time })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('确认完成失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('预约已标记为已完成');
+                    fetchAppointmentsData(); // 重新获取数据
+                })
+                .catch(error => {
+                    console.error('确认完成错误:', error);
+                });
+            }
+        }
+
+
+        function updateAppointmentsDisplay() {
+            var contentArea = document.getElementById('content-area');
+            var tableHtml = '<table><tr><th>地点</th><th>时间</th><th>日期(0为今天，1为明天）</th><th>操作</th></tr>';
+
+            if (appointments.length > 0) {
+                appointments.forEach(function(appointment, index) {
+                    tableHtml += '<tr>' +
+                                '<td>' + appointment.location + '</td>' +
+                                '<td>' + appointment.time + '</td>' +
+                                '<td>' + appointment.dateindex + '</td>' +
+                                '<td>' +
+                                '<button class="button" onclick="markCompleted(' + index + ')">确认完成</button>' +
+                                '<button class="button" onclick="cancelAppointment(' + index + ')">取消预约</button>' +
+                                '</td></tr>';
+                });
+            } else {
+                tableHtml = '没有待处理的预约。';
+            }
+
+            tableHtml += '</table>';
+            contentArea.innerHTML = tableHtml;
+        }
+
+
+        function updateCompletedDisplay() {
+            var contentArea = document.getElementById('content-area'); // 确保这是正确的元素ID
+            var tableHtml = '<table><tr><th>地点</th><th>时间</th><th>状态</th></tr>';
+
+            if (completedAppointments.length > 0) {
+                completedAppointments.forEach(function(appointment) {
+                    tableHtml += '<tr>' +
+                                '<td>' + appointment.location + '</td>' +
+                                '<td>' + appointment.time + '</td>' +
+                                '<td>' + appointment.status + '</td></tr>'; // 显示状态为“已完成”
+                });
+            } else {
+                tableHtml = '没有已完成的预约。';
+            }
+
+            tableHtml += '</table>';
+            contentArea.innerHTML = tableHtml;
+        }
+
+
+        function cancelAppointment(index) {
+            var appointment = appointments[index];
+            if (confirm('确认要取消这个预约吗？')) {
+                fetch('http://127.0.0.1:5000/cancel_booking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ facility: appointment.location, time: appointment.time, dateindex: appointment.dateindex })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('取消预约失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('预约已取消');
+                    fetchAppointmentsData(); // 重新获取数据
+                })
+                .catch(error => {
+                    console.error('取消预约错误:', error);
+                });
+            }
+        }
+
+
+        function updateCancelledDisplay() {
+            var contentArea = document.getElementById('content-area'); // 确保这是正确的元素ID
+            var tableHtml = '<table><tr><th>地点</th><th>时间</th><th>日期(0为今天，1为明天）</th><th>状态</th></tr>';
+
+            if (cancelledAppointments.length > 0) {
+                cancelledAppointments.forEach(function(appointment) {
+                    tableHtml += '<tr>' +
+                                '<td>' + appointment.location + '</td>' +
+                                '<td>' + appointment.time + '</td>' +
+                                '<td>' + appointment.dateindex + '</td>' +
+                                '<td>已取消</td></tr>'; // 状态列显示为“已取消”
+                });
+            } else {
+                tableHtml = '没有已取消的预约。';
+            }
+
+            tableHtml += '</table>';
+            contentArea.innerHTML = tableHtml;
+        }
+
+
+        window.onload = fetchAppointmentsData;
+    </script>
+</body>
+</html>

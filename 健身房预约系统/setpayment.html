@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>支付页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .package-info {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .background-image {
+            position: fixed; /* 固定位置 */
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-image: url('C:/Users/32068/Desktop/健身房预约系统/images/background.jpg');
+            background-size: cover; /* 覆盖整个页面 */
+            background-position: center; /* 居中对齐 */
+            z-index: -1; /* 确保背景在内容之后 */
+            opacity: 0.5; /* 调节透明度 */
+        }
+    </style>
+</head>
+<body>
+    <div class="background-image"></div>
+    <div id="package-details" class="package-info">
+        <h2 id="package-name"></h2>
+        <p id="original-price"></p>
+        <p>已有积分: <span id="points"></span></p>
+        <p>需支付: <span id="payable"></span></p>
+    </div>
+    <div>
+        <button onclick="confirmPayment()">确认支付</button>
+        <button onclick="cancelPayment()">取消支付</button>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // 假设后端接口 /get-package 返回套餐信息
+            fetch('http://127.0.0.1:5000/get-package')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('package-name').textContent = data.package || '未知套餐';
+                document.getElementById('original-price').textContent = '原价: ' + (data.price || '0') + '￥';
+                var p = data.price
+                fetch('http://127.0.0.1:5000/get-points')
+                .then(response => response.json())
+                .then(data => {
+                    const points = data.points;
+                    document.getElementById('points').textContent = points; // 更新积分
+                    document.getElementById('payable').textContent = (p - points) + '￥'; // 更新应支付金额
+                })
+                .catch(error => {
+                    console.error('Error fetching points:', error);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        };
+
+        function confirmPayment() {
+            fetch('http://127.0.0.1:5000/confirm-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("支付已确认");
+                    window.location.href = 'account.html';
+                } else {
+                    alert("支付处理失败，请重试");
+                }
+            })
+            .catch(error => {
+                console.error('Error confirming payment:', error);
+            });
+        }
+
+
+        function cancelPayment() {
+            // 取消支付逻辑
+            alert("支付已取消");
+            window.location.href = 'account.html';
+        }
+    </script>
+</body>
+</html>

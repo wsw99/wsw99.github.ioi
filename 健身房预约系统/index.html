@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>北京邮电大学体育馆预约系统</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            height: 100vh; /* 视口高度 */
+        }
+        h1 {
+            margin-top: 50px;
+        }
+        .form-box {
+            background-color: #e6f0ff; /* 浅蓝色背景 */
+            width: 300px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 15px; /* 圆角 */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 轻微阴影 */
+
+        }
+        .form-input {
+            margin: 10px 0;
+        }
+        .form-input input {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px; /* 输入框圆角 */
+        }
+        .error-message {
+            color: red;
+            display: none;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px; /* 按钮圆角 */
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .background-image {
+            position: fixed; /* 固定位置 */
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-image: url('C:/Users/32068/Desktop/健身房预约系统/images/background.jpg');
+            background-size: cover; /* 覆盖整个页面 */
+            background-position: center; /* 居中对齐 */
+            z-index: -1; /* 确保背景在内容之后 */
+            opacity: 0.5; /* 调节透明度 */
+        }
+        .content {
+            position: relative;
+            z-index: 1; /* 确保内容在背景之上 */
+            /* 其他样式 */
+            display: flex; /* 设置为 Flex 容器 */
+            flex-direction: column; /* 垂直布局 */
+            justify-content: center; /* Y 轴居中 */
+            align-items: center; /* X 轴居中 */
+            height: 60vh; /* 容器高度设置为视口高度 */
+        }
+    </style>
+</head>
+<body>
+    <div class="background-image"></div>
+    <h1>北京邮电大学体育馆预约系统</h1>
+    
+    <div class="content">
+        <div class="form-box">
+            <div class="login-form">
+                <div class="form-input">
+                    <label for="username">账号:</label>
+                    <input type="text" id="username">
+                </div>
+                <div class="form-input">
+                    <label for="password">密码:</label>
+                    <input type="password" id="password">
+                </div>
+                <button onclick="login()">登录</button>
+                <button onclick="window.location.href='register.html'">注册</button>
+                <p class="error-message" id="error-message">账号或密码输入错误</p>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="resetAvailability()">重置可预约名额</button>
+
+    <script>
+        function login() {
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            var errorMessage = document.getElementById('error-message');
+
+            fetch('http://127.0.0.1:5000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: username, password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === '登录成功') {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    throw new Error(data.error || '登录失败');
+                }
+            })
+            .catch(error => {
+                // 显示错误信息
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+            });
+        }
+
+        function resetAvailability() {
+            fetch('http://127.0.0.1:5000/reset-availability', { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络请求失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert(data.message);
+                })
+                .catch(error => {
+                    console.error('错误:', error);
+                });
+        }
+       
+
+    </script>
+</body>
+</html>

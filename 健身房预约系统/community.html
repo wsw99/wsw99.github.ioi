@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>社区互动</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            width: 100%;
+            height: 50px;
+            background-color: #e6f0ff;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            position: fixed;
+            top: 0;
+            z-index: 1;
+        }
+        .header-box {
+            display: inline-block;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        .header-box.active {
+            background-color: #a0a0a0;
+        }
+        .main {
+            display: flex; /* 使用 Flexbox 布局 */
+            margin-top: 50px; /* 为顶部导航栏留出空间 */
+            height: calc(100vh - 50px); /* 减去顶部栏的高度 */
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #e6f0ff;
+            padding: 10px;
+            display: none; /* 默认不显示，点击后显示 */
+        }
+        .sidebar-box {
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            background-color: #e6f0ff;
+        }
+
+        .hidden {
+            display: none; /* 默认隐藏 */
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #f9f9f9; /* 内容区背景颜色 */
+        }
+        .canvas-container {
+            width: 70%;
+            margin: auto;
+        }
+        .sidebar-submenu {
+            display: none; /* 默认不显示 */
+            position: absolute; /* 绝对定位 */
+            left: 200px; /* 与左侧栏保持一定距离 */
+            top: 0;
+            background-color: #f9f9f9;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            padding: 10px;
+            width: 200px; /* 子菜单宽度 */
+        }
+
+        .sidebar-box:hover + .sidebar-submenu {
+            display: block; /* 鼠标悬停显示子菜单 */
+        }
+
+        .sidebar-submenu {
+            display: none; /* 默认不显示 */
+            position: absolute; /* 绝对定位 */
+            left: 0; /* 与左侧栏对齐 */
+            top: 60px; /* 根据可能的朋友盒子的高度调整 */
+            background-color: #f9f9f9;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            padding: 10px;
+            width: 200px; /* 子菜单宽度 */
+        }
+
+        #potential-friends:hover + .sidebar-submenu {
+            display: block; /* 鼠标悬停在可能的朋友盒子上显示子菜单 */
+        }
+
+        .content, .main {
+            width: 100%;
+        }
+        #friends-options .sidebar-box {
+            padding-left: 20px; /* 子菜单项缩进 */
+        }
+        .comments-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* 使评论内容左对齐 */
+            width: 100%; /* 设置容器宽度为100% */
+            padding: 40px; /* 添加一些内部间距 */
+        }
+
+        .comment-box {
+            width: calc(100% - 20px); /* 减去padding的宽度 */
+            margin: 15px 0; /* 增加上下间距 */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            text-align: left; /* 评论内容左对齐 */
+        }
+
+        /* 分页和评论输入区域样式 */
+        .pagination, .comment-input-area {
+            width: 100%;
+            text-align: center;
+            padding: 0 10px; /* 保证元素在容器内居中 */
+        }
+
+        .pagination button, .comment-input-area button {
+            padding: 5px 10px;
+            margin: 0 5px;
+        }
+
+        .comment-input-area input {
+            width: calc(70% - 20px); /* 减去padding的宽度 */
+            padding: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: white;
+            color: black;
+            border: none;
+            border-radius: 5px; /* 按钮圆角 */
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #78b3f3;
+        }
+        /* 响应式布局 */
+        @media (max-width: 600px) {
+            .comment-box, .pagination, .comment-input-area {
+                width: calc(95% - 20px); /* 减去padding的宽度 */
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="header">
+        <div class="header-box" id="data-analysis" onclick="selectTab('data-analysis')">数据分析</div>
+        <div class="header-box" id="community-discussion" onclick="selectTab('community-discussion')">社区讨论</div>
+        <button onclick="window.location.href='dashboard.html'">返回</button>
+    </div>
+    
+    <div class="main">
+        <div class="sidebar" id="sidebar">
+            <!-- 左侧栏内容 -->
+            <div class="sidebar-box" onclick="showPersonalStats()">个人锻炼记录统计</div>
+            <div class="sidebar-box" onclick="toggleFriendsOptions()">可能的朋友</div>
+            <div id="friends-options" class="hidden">
+                <div class="sidebar-box" onclick="fetchUserScheduleStats('健身房')">健身房</div>
+                <div class="sidebar-box" onclick="fetchUserScheduleStats('一层羽毛球场')">一层羽毛球场</div>
+                <div class="sidebar-box" onclick="fetchUserScheduleStats('三层羽毛球场')">三层羽毛球场</div>
+                <div class="sidebar-box" onclick="fetchUserScheduleStats('乒乓球场')">乒乓球场</div>
+                <div class="sidebar-box" onclick="fetchUserScheduleStats('游泳馆')">游泳馆</div>
+                <div class="sidebar-box" onclick="fetchUserScheduleStats('沙河校区乒乓球场地')">沙河校区乒乓球场地</div>
+                <div class="sidebar-box" onclick="fetchUserScheduleStats('沙河校区羽毛球场地-室内')">沙河校区羽毛球场地-室内</div>
+                <div class="sidebar-box" onclick="fetchUserScheduleStats('健身房-沙河校区')">健身房-沙河校区</div>
+            </div>
+        </div>
+        <div class="content" id="content-area">
+            <!-- 中间内容区域 -->
+        </div>
+    </div>
+
+    <script src="https://fastly.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        function toggleFriendsOptions() {
+            var friendsOptions = document.getElementById('friends-options');
+            if (friendsOptions.classList.contains('hidden')) {
+                friendsOptions.classList.remove('hidden');
+            } else {
+                friendsOptions.classList.add('hidden');
+            }
+        }
+       function selectTab(tabId) {
+            var sidebar = document.getElementById('sidebar');
+            var dataAnalysisBox = document.getElementById('data-analysis');
+            var communityDiscussionBox = document.getElementById('community-discussion');
+            var contentArea = document.getElementById('content-area');
+            contentArea.innerHTML ='';
+            dataAnalysisBox.classList.remove('active');
+            communityDiscussionBox.classList.remove('active'); 
+            if (tabId === 'data-analysis') {
+                dataAnalysisBox.classList.add('active');
+                sidebar.style.display = 'block'; // 显示左侧栏
+            } else if (tabId === 'community-discussion') {
+                communityDiscussionBox.classList.add('active');
+                sidebar.style.display = 'none'; // 隐藏左侧栏
+                showCommunityDiscussion();
+            }
+        }
+
+        function showContent(contentType) {
+            var contentArea = document.getElementById('content-area');
+            
+            // 根据contentType显示相应内容
+            switch(contentType) {
+                case 'personal-stats':
+                    contentArea.innerHTML = '<h2>个人锻炼记录统计</h2>';
+                    // 这里可以添加更多逻辑
+                    break;
+                case 'potential-friends':
+                    contentArea.innerHTML = '<h2>可能的朋友</h2>';
+                    // 这里可以添加更多逻辑
+                    break;
+                default:
+                    contentArea.innerHTML = '<p>选择一个选项以继续</p>';
+            }
+        }
+
+        function showPersonalStats() {
+            var contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = '<div style="height:50%;width:50%;" class="canvas-container"><canvas id="pieChart"></canvas></div>';
+
+            fetch('http://127.0.0.1:5000/personal-stats')
+                .then(response => response.json())
+                .then(data => {
+                    drawPieChart(data, 'pieChart');
+                })
+                .catch(error => {
+                    console.error('获取统计数据错误:', error);
+                });
+        }
+
+        function drawPieChart(data, canvasId) {
+            var ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: '预约统计',
+                        data: data.data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(100, 62, 235, 0.2)',
+                            'rgba(155, 80, 150, 0.2)',
+                            'rgba(125, 10, 50, 0.2)',
+                            'rgba(170, 30, 50, 0.2)',
+                            'rgba(190, 5, 250, 0.2)',
+                            'rgba(90, 78, 10, 0.2)',
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(100, 62, 235, 0.2)',
+                            'rgba(155, 80, 150, 0.2)',
+                            'rgba(125, 10, 50, 0.2)',
+                            'rgba(170, 30, 50, 0.2)',
+                            'rgba(190, 5, 250, 0.2)',
+                            'rgba(90, 78, 10, 0.2)',
+                            // ... 添加更多边框颜色
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: '预约地点统计'
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+        }
+
+        function fetchUserScheduleStats(location) {
+            var contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = '<div style="height:50%;width:50%;"><canvas id="userSchedulePieChart"></canvas></div>';
+
+            fetch('http://127.0.0.1:5000/get-user-schedule-stats?location=' + location)
+                .then(response => response.json())
+                .then(data => {
+                    drawUserSchedulePieChart(data, 'userSchedulePieChart');
+                })
+                .catch(error => {
+                    console.error('Error fetching user schedule stats:', error);
+                });
+        }
+
+        function drawUserSchedulePieChart(data, canvasId) {
+            var ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: '用户预约统计',
+                        data: data.data,
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(100, 62, 235, 0.2)',
+                            'rgba(155, 80, 150, 0.2)',
+                            'rgba(125, 10, 50, 0.2)',
+                            'rgba(170, 30, 50, 0.2)',
+                            'rgba(190, 5, 250, 0.2)',
+                            'rgba(90, 78, 10, 0.2)',],
+                        borderColor: ['rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(100, 62, 235, 0.2)',
+                            'rgba(155, 80, 150, 0.2)',
+                            'rgba(125, 10, 50, 0.2)',
+                            'rgba(170, 30, 50, 0.2)',
+                            'rgba(190, 5, 250, 0.2)',
+                            'rgba(90, 78, 10, 0.2)',],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    legend: { position: 'top' },
+                    title: { display: true, text: '可能的朋友' },
+                    animation: { animateScale: true, animateRotate: true }
+                }
+            });
+        }
+        var currentPage = 1;
+        var perPage = 10;
+
+        // 当点击社区讨论时调用的函数
+        function showCommunityDiscussion() {
+            var contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <h3>社区讨论</h3>
+                <div class="comments-container" id="comments-container">
+                </div>
+                <div class="comment-input-area">
+                    <input type="text" id="comment-input" placeholder="输入评论...">
+                    <button onclick="submitComment()">发送</button>
+                </div>
+                <div class="pagination">
+                    <button onclick="changePage(-1)">上一页</button>
+                    <span id="page-number">第${currentPage}页</span>
+                    <button onclick="changePage(1)">下一页</button>
+                </div>
+            `;
+            loadComments(currentPage);
+        }
+        function loadComments(page) {
+            fetch('http://127.0.0.1:5000/get-comments?page=' + page)
+                .then(response => response.json())
+                .then(data => {
+                    var commentsContainer = document.getElementById('comments-container');
+                    commentsContainer.innerHTML = ''; // 清空现有评论
+                    data.forEach(comment => {
+                        // 使用 `comment-box` 类为每个评论创建一个盒子
+                        commentsContainer.innerHTML += `
+                            <div class="comment-box">
+                                <b>${comment.user}</b>: ${comment.comment}
+                            </div>`;
+                    });
+                    currentPage = page; // 更新当前页面
+                    document.getElementById('page-number').textContent = '第 ' + currentPage + ' 页';
+                })
+                .catch(error => {
+                    console.error('Error fetching comments:', error);
+                });
+        }
+
+        function changePage(delta) {
+            var newPage = currentPage + delta;
+            if (newPage < 1) return;  // 防止页面数小于 1
+            loadComments(newPage);
+        }
+        function submitComment() {
+            var comment = document.getElementById('comment-input').value;
+            if (!comment) {
+                alert("请输入评论内容！");
+                return;
+            }
+
+            fetch('http://127.0.0.1:5000/submit-comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ comment: comment })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                document.getElementById('comment-input').value = ''; // 清空输入框
+                loadComments(currentPage); // 重新加载评论
+            })
+            .catch(error => {
+                console.error('Error submitting comment:', error);
+            });
+        }
+    </script>
+</body>
+</html>
